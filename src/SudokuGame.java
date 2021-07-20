@@ -157,16 +157,87 @@ public class SudokuGame extends JFrame implements ActionListener {
         }
         // displayBoard(board);
     }
-    // public void getBoard(int[][] ogBoard){
-    // for (int row = 0; row < 9;row++){
-    // for (int col = 0;)
-    // }
+
+    public void matchBoard(int[][] board) {
+        for (int row = 0; row < GRID_SIZE; row++) {
+            for (int col = 0; col < GRID_SIZE; col++) {
+                int match = board[row][col];
+                matchRow(match, row, board);
+                matchCol(match, col, board);
+                matchBox(match, row, col, board);
+            }
+        }
+    }
+
+    private void matchBox(int match, int row, int col, int[][] board) {
+        int localBoxRow = row - row % 3;
+        int localBoxCol = col - col % 3;
+        int count = 0;
+        for (int r = localBoxRow; r < localBoxRow + 3; r++) {
+            for (int c = localBoxCol; c < localBoxCol + 3; c++) {
+                if (board[r][c] == match && board[r][c] != 0) {
+                    count += 1;
+                }
+            }
+        }
+
+        if (count >= 2) {
+            for (int r = localBoxRow; r < localBoxRow + 3; r++) {
+                for (int c = localBoxCol; c < localBoxCol + 3; c++) {
+                    if (board[r][c] == match && board[r][c] != 0) {
+                        numBoxes[row][col].setBackground(Color.RED);
+                    }
+                }
+
+            }
+        }
+
+    }
+
+    private void matchRow(int match, int row, int[][] board) {
+        int count = 0;
+
+        for (int col = 0; col < GRID_SIZE; col++) {
+            if (board[row][col] == match && board[row][col] != 0 && count < 2) {
+                count += 1;
+            }
+        }
+
+        if (count >= 2) {
+            for (int col = 0; col < GRID_SIZE; col++) {
+                if (board[row][col] == match && board[row][col] != 0) {
+                    numBoxes[row][col].setBackground(Color.RED);
+                }
+            }
+
+        }
+    }
+
+    private void matchCol(int match, int col, int[][] board) {
+        int count = 0;
+
+        for (int row = 0; row < GRID_SIZE; row++) {
+            if (board[row][col] == match && board[row][col] != 0 && count < 2) {
+                count += 1;
+            }
+        }
+
+        if (count >= 2) {
+            for (int row = 0; row < GRID_SIZE; row++) {
+                if (board[row][col] == match && board[row][col] != 0) {
+                    numBoxes[row][col].setBackground(Color.RED);
+                }
+            }
+
+        }
+    }
 
     // }
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == button) {
             updateTile();
+            matchBoard(board);
             if (areBoardsEqual(board, solvedBoard)) {
                 System.out.println("Board complete");
             }
