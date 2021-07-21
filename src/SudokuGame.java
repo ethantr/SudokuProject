@@ -20,8 +20,13 @@ public class SudokuGame extends JFrame implements ActionListener {
     int[][] board = new int[9][9];
     static int[][] solvedBoard = new int[9][9];
 
+    Color lockedColour = new Color(200, 220, 230);
+    Color unlockedColour = new Color(230, 250, 255);
+    Color matchedColour = new Color(200, 0, 0);
+
     final static int GRID_SIZE = 9;
 
+    // initialise the Sudoku game
     SudokuGame(int[][] b) {
         this.boardTemp = b;
         copyBoard(boardTemp, board);
@@ -53,7 +58,7 @@ public class SudokuGame extends JFrame implements ActionListener {
 
     }
 
-    // sudokusolve: AI to solve a sudoku board.
+    // sudokusolve: AI to solve and output a sudoku board.
     private static boolean sudokuSolve(int[][] board) {
 
         for (int row = 0; row < GRID_SIZE; row++) {
@@ -125,40 +130,90 @@ public class SudokuGame extends JFrame implements ActionListener {
         return true;
     }
 
+    // buildTile: construct the JTextfield board
     public void buildTile() {
         sudokuGrid.setLayout(new GridLayout(9, 9));
+        // for all the places on inputted board
         for (int row = 0; row < 9; row++) {
             for (int col = 0; col < 9; col++) {
+                // if the intial board has valid number in it, lock the box
                 if (board[row][col] != 0) {
                     numBoxes[row][col] = new JTextField(Integer.toString(board[row][col]));
-                    numBoxes[row][col].setBackground(new Color(200, 220, 230));
+                    numBoxes[row][col].setBackground(lockedColour);
                     numBoxes[row][col].setEditable(false);
+                    // otherwise create a regular field that is blank
                 } else {
                     numBoxes[row][col] = new JTextField();
-                    numBoxes[row][col].setBackground(new Color(230, 250, 255));
+                    numBoxes[row][col].setBackground(unlockedColour);
                 }
                 numBoxes[row][col].setFont(new FontUIResource("Keep Calm Med", Font.BOLD, 20));
                 numBoxes[row][col].setHorizontalAlignment(JTextField.CENTER);
                 numBoxes[row][col].setForeground(Color.black);
-
+                // add to the panel
                 sudokuGrid.add(numBoxes[row][col]);
             }
         }
     }
 
-    public void updateTile() {
-        for (int row = 0; row < 9; row++) {
-            for (int col = 0; col < 9; col++) {
-                String number = numBoxes[row][col].getText();
-                if (!number.isEmpty() && Integer.valueOf(number) >= 1 && Integer.valueOf(number) <= 9) {
-                    board[row][col] = Integer.valueOf(number);
+    // }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == button) {
+            // reset colours on board to clear matches
+            resetColourBoard();
+            // update the board array,
+            updateBoard();
+            // find matching tiles on board
+            matchBoard(board);
+
+            // if the board is solved//
+            if (areBoardsEqual(board, solvedBoard)) {
+
+                boardComplete();
+            }
+
+        }
+
+    }
+
+    // resetColourBoard: resets colours of tiles to locked or unlocked colours;
+    public void resetColourBoard() {
+        for (int row = 0; row < GRID_SIZE; row++) {
+            for (int col = 0; col < GRID_SIZE; col++) {
+                if (numBoxes[row][col].isEditable()) {
+                    numBoxes[row][col].setBackground(unlockedColour);
+                } else {
+                    numBoxes[row][col].setBackground(lockedColour);
                 }
             }
         }
-        // displayBoard(board);
     }
 
+    // boardComplete: activated when the user has solved the game.
+    private void boardComplete() {
+        System.out.println("Board complete");
+    }
+
+    // updateBoard: updates the board array from the inputs in the TextFrames
+    public void updateBoard() {
+        for (int row = 0; row < 9; row++) {
+            for (int col = 0; col < 9; col++) {
+                String number = numBoxes[row][col].getText();
+                // if tile is not empty and the number is between 1 & 9, update the current
+                // position on board
+                if (!number.isEmpty() && Integer.valueOf(number) >= 1 && Integer.valueOf(number) <= 9) {
+                    board[row][col] = Integer.valueOf(number);
+                    // otherwise put in placeholder as number is not valid
+                } else {
+                    board[row][col] = 0;
+                }
+            }
+        }
+    }
+
+    // matchBoard: goes through board and finds matches in rows, coloums and boxs
     public void matchBoard(int[][] board) {
+
         for (int row = 0; row < GRID_SIZE; row++) {
             for (int col = 0; col < GRID_SIZE; col++) {
                 int match = board[row][col];
@@ -185,7 +240,7 @@ public class SudokuGame extends JFrame implements ActionListener {
             for (int r = localBoxRow; r < localBoxRow + 3; r++) {
                 for (int c = localBoxCol; c < localBoxCol + 3; c++) {
                     if (board[r][c] == match && board[r][c] != 0) {
-                        numBoxes[row][col].setBackground(Color.RED);
+                        numBoxes[row][col].setBackground(matchedColour);
                     }
                 }
 
@@ -206,7 +261,7 @@ public class SudokuGame extends JFrame implements ActionListener {
         if (count >= 2) {
             for (int col = 0; col < GRID_SIZE; col++) {
                 if (board[row][col] == match && board[row][col] != 0) {
-                    numBoxes[row][col].setBackground(Color.RED);
+                    numBoxes[row][col].setBackground(matchedColour);
                 }
             }
 
@@ -225,25 +280,20 @@ public class SudokuGame extends JFrame implements ActionListener {
         if (count >= 2) {
             for (int row = 0; row < GRID_SIZE; row++) {
                 if (board[row][col] == match && board[row][col] != 0) {
-                    numBoxes[row][col].setBackground(Color.RED);
+                    numBoxes[row][col].setBackground(matchedColour);
                 }
             }
 
         }
     }
 
-    // }
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == button) {
-            updateTile();
-            matchBoard(board);
-            if (areBoardsEqual(board, solvedBoard)) {
-                System.out.println("Board complete");
+    // copyBoard: copys one sudoku startBoard to board2.
+    private static void copyBoard(int[][] board1, int[][] board2) {
+        for (int row = 0; row < GRID_SIZE; row++) {
+            for (int col = 0; col < GRID_SIZE; col++) {
+                board2[row][col] = board1[row][col];
             }
 
-            // button.setEnabled(false);
-            // textField.setEditable(false);
         }
 
     }
@@ -276,18 +326,7 @@ public class SudokuGame extends JFrame implements ActionListener {
         }
     }
 
-    // copyBoard: copys one sudoku startBoard to board2.
-    private static void copyBoard(int[][] board1, int[][] board2) {
-        for (int row = 0; row < GRID_SIZE; row++) {
-            for (int col = 0; col < GRID_SIZE; col++) {
-                board2[row][col] = board1[row][col];
-            }
-
-        }
-
-    }
-
-    // displayBoard: Displays sudoku board in text form
+    // displayBoard: Displays sudoku board in text form for debugging
     private static void displayBoard(int[][] board) {
         for (int row = 0; row < GRID_SIZE; row++) {
             if (row != 0 && row % 3 == 0) {
